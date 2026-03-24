@@ -1,0 +1,10 @@
+/datastore
+.env
+.venv/
+*.sconsign.dblite
+*.DS_store
+*.pyc
+*.ipynb*
+
+
+
