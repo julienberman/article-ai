@@ -16,8 +16,8 @@ def main():
     flush_size = 50
     verbose = True
     tag_urls = {
-        "editorials": "https://www.thecrimson.com/tag/editorials/",
-        "op-eds": "https://www.thecrimson.com/tag/op-eds/",
+        # "editorials": "https://www.thecrimson.com/tag/editorials/",
+        # "op-eds": "https://www.thecrimson.com/tag/op-eds/",
         "columns": "https://www.thecrimson.com/tag/columns/",
     }
 
@@ -28,26 +28,16 @@ def main():
     for tag_url in tag_urls.values():
         article_urls.update(collect_article_urls(session, tag_url, verbose))
 
-    link_rows = []
-    for index, article_url in enumerate(sorted(article_urls), start=1):
-        link_rows.append({"article_id": index, "url": article_url})
-
-    links_df = pd.DataFrame(link_rows)
-    links_df.to_csv(links_path, index=False)
-    print(f"Saved {len(links_df)} links to {links_path}")
-
     scraped_urls = load_scraped_urls(articles_path)
 
     rows_buffer = []
     appended_count = 0
-    for link_row in link_rows:
-        article_url = link_row["url"]
+    for article_url in links_df["url"]:
         if article_url in scraped_urls:
             continue
 
         row = parse_article(session, base_url, article_url, verbose)
         if row:
-            row["article_id"] = link_row["article_id"]
             row["url"] = article_url
             rows_buffer.append(row)
 
@@ -93,7 +83,7 @@ def collect_article_urls(session, tag_url, verbose):
 
         soup = BeautifulSoup(response.text, "html.parser")
         page_links = []
-        for anchor in soup.select('a[href^="/article/"]'):
+        for anchor in soup.select('a[href*="/article/"]'):
             href = anchor.get("href")
             if href and href not in page_links:
                 page_links.append(href)
@@ -142,7 +132,6 @@ def load_scraped_urls(articles_path):
         return set()
 
     required_columns = {
-        "article_id",
         "url",
         "author",
         "date",
@@ -167,7 +156,7 @@ def flush_rows(rows_buffer, articles_path):
     if not rows_buffer:
         return 0
 
-    columns = ["article_id", "url", "author", "date", "title", "text"]
+    columns = ["url", "author", "date", "title", "text"]
     df_buffer = pd.DataFrame(rows_buffer, columns=columns)
     write_header = not articles_path.exists()
     df_buffer.to_csv(
