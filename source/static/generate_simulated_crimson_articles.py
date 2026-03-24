@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -23,11 +24,12 @@ def main() -> None:
         "Input will be JSON in this shape: "
         '{"articles":[{"article_id":"...","text":"..."}]}.'
     )
-    n_rows = None
+    n_rows = 100
     batch_size = 20
     openai_api_key = os.getenv("OPENAI_API_KEY")
 
     df_raw = pd.read_csv(indir / "articles_raw.csv")
+    df_raw = generate_article_ids(df_raw)
 
     df_simulated = generate_simulated_articles(
         df=df_raw,
@@ -40,6 +42,14 @@ def main() -> None:
 
     outdir.mkdir(parents=True, exist_ok=True)
     df_simulated.to_csv(outdir / "articles_simulated.csv", index=False)
+
+
+def generate_article_ids(df: pd.DataFrame) -> pd.DataFrame:
+    return df.assign(
+        article_id=lambda x: (
+            x["url"].fillna("").astype(str) + "|" + x["date"].fillna("").astype(str)
+        ).map(lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest()[:6])
+    )
 
 
 def generate_simulated_articles(
