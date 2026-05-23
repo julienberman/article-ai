@@ -16,9 +16,10 @@ def main():
     flush_size = 50
     verbose = True
     tag_urls = {
-        # "editorials": "https://www.thecrimson.com/tag/editorials/",
-        # "op-eds": "https://www.thecrimson.com/tag/op-eds/",
+        "editorials": "https://www.thecrimson.com/tag/editorials/",
+        "op-eds": "https://www.thecrimson.com/tag/op-eds/",
         "columns": "https://www.thecrimson.com/tag/columns/",
+        "arts": "https://www.thecrimson.com/tag/arts/",
     }
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -27,6 +28,9 @@ def main():
     article_urls = set()
     for tag_url in tag_urls.values():
         article_urls.update(collect_article_urls(session, tag_url, verbose))
+
+    links_df = pd.DataFrame({"url": sorted(article_urls)})
+    links_df.to_csv(links_path, index=False)
 
     scraped_urls = load_scraped_urls(articles_path)
 
